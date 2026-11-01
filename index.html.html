@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ازاي الفرونت إند بيكلّم الباك إند</title>
+<style>
+:root{
+  --bg:#EEF2F6; --surface:#FFFFFF; --ink:#14283C; --muted:#52667A; --line:#C9D4DF;
+  --fe:#0B7F73; --fe-soft:#DDF1EE;
+  --be:#4448C9; --be-soft:#E4E5FA;
+  --db:#A8700A; --db-soft:#F8EBD2;
+  --code-bg:#0F1E2D; --code-ink:#E6EEF5; --code-inline:#E1E8EF;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0D1822; --surface:#14232F; --ink:#E6EEF5; --muted:#9FB2C3; --line:#2A3C4B;
+    --fe:#3FC9B8; --fe-soft:#12322F;
+    --be:#9296FF; --be-soft:#22244F;
+    --db:#E3A93B; --db-soft:#3A2D12;
+    --code-bg:#0A141C; --code-ink:#E6EEF5; --code-inline:#1F3345;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
+  font-size:16px;line-height:1.85}
+main{max-width:640px;margin:0 auto;padding:22px 16px 60px}
+h1{font-size:28px;line-height:1.4;margin:6px 0 10px;font-weight:800}
+h2{font-size:21px;line-height:1.45;margin:46px 0 12px;font-weight:800}
+h3{font-size:17px;line-height:1.5;margin:0 0 10px;font-weight:700}
+p{margin:0 0 12px}
+.lead{color:var(--muted);font-size:17px;margin-bottom:6px}
+.muted{color:var(--muted);font-size:14.5px}
+
+/* layer colours: the one idea that runs through the whole page */
+.fe{--c:var(--fe);--c-soft:var(--fe-soft)}
+.be{--c:var(--be);--c-soft:var(--be-soft)}
+.db{--c:var(--db);--c-soft:var(--db-soft)}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:16px 0 18px}
+.legend li{padding:2px 14px;border-radius:999px;font-size:14px;font-weight:600;
+  border:1.5px solid var(--c);background:var(--c-soft)}
+
+code{font-family:var(--mono);font-size:.86em;direction:ltr;unicode-bidi:isolate;
+  background:var(--code-inline);padding:1px 6px;border-radius:5px}
+
+/* figures */
+.fig{margin:18px 0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px 10px}
+.fig svg{display:block;width:100%;max-width:440px;height:auto;margin:0 auto;direction:ltr}
+.fig figcaption{font-size:14px;color:var(--muted);text-align:center;padding:8px 6px 2px;line-height:1.7}
+svg text{fill:var(--ink);font-size:12px;font-family:"Noto Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif}
+svg .tb{font-weight:700}
+svg .tm{fill:var(--muted);font-size:10.5px}
+svg .mono{font-family:var(--mono)}
+svg .c-fe{fill:var(--fe)} svg .c-be{fill:var(--be)} svg .c-db{fill:var(--db)}
+.fe-box{fill:var(--fe-soft);stroke:var(--fe);stroke-width:1.6}
+.be-box{fill:var(--be-soft);stroke:var(--be);stroke-width:1.6}
+.db-box{fill:var(--db-soft);stroke:var(--db);stroke-width:1.6}
+.inner{fill:var(--surface);stroke:var(--line);stroke-width:1.3}
+.dash{stroke-dasharray:5 4}
+.arrow{stroke:var(--ink);stroke-width:1.6;fill:none}
+.mk{fill:var(--ink)}
+.life{stroke:var(--line);stroke-width:1.5;stroke-dasharray:3 4}
+.num{fill:var(--ink)}
+svg .numt{fill:var(--bg);font-weight:700;font-size:11px}
+.codebox{fill:var(--code-bg)}
+svg .codet{fill:var(--code-ink);font-family:var(--mono);font-size:10.5px}
+svg .codem{fill:#8FA6BA;font-size:10.5px}
+.btn{fill:var(--fe)}
+svg .btnt{fill:var(--bg);font-weight:700}
+
+/* "four things must match" blocks */
+.match{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+.match .row{display:flex;gap:10px;align-items:flex-start;margin-top:8px}
+.who{flex:none;width:62px;text-align:center;font-size:13px;font-weight:700;border-radius:6px;
+  padding:1px 0;border:1.5px solid var(--c);background:var(--c-soft)}
+.row .val{flex:1;min-width:0;direction:ltr;text-align:left;font-family:var(--mono);font-size:13px;
+  line-height:1.7;overflow-wrap:anywhere;padding-top:2px}
+
+/* data transformation chain */
+.chain{margin:6px 0 0}
+.node{background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid var(--c);
+  border-radius:10px;padding:10px 14px}
+.node b{display:block;font-size:15px;margin-bottom:2px}
+.node .val{display:block;direction:ltr;text-align:left;font-family:var(--mono);font-size:12.5px;
+  overflow-wrap:anywhere;line-height:1.7;color:var(--ink)}
+.hop{text-align:center;color:var(--muted);font-size:14px;padding:5px 0}
+
+/* sequence list */
+.seq{padding:0;margin:14px 0 0;list-style:none;counter-reset:s}
+.seq li{counter-increment:s;position:relative;padding:6px 40px 6px 0;margin-bottom:2px}
+.seq li::before{content:counter(s);position:absolute;right:0;top:9px;width:26px;height:26px;border-radius:50%;
+  background:var(--c);color:var(--bg);font-weight:700;font-size:14px;line-height:26px;text-align:center}
+
+/* code walkthrough */
+.step{background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid var(--c);
+  border-radius:10px;padding:14px;margin:18px 0}
+.tab{direction:ltr;text-align:left;font-family:var(--mono);font-size:12.5px;font-weight:700;
+  background:var(--c);color:var(--bg);padding:3px 12px;border-radius:8px 8px 0 0;display:inline-block}
+pre{direction:ltr;text-align:left;margin:0;background:var(--code-bg);color:var(--code-ink);
+  padding:14px;border-radius:0 8px 8px 8px;overflow-x:auto;font-family:var(--mono);
+  font-size:12.5px;line-height:1.7;tab-size:2}
+pre code{background:none;padding:0;font-size:inherit;unicode-bidi:normal}
+.s{color:#F2C879} .c{color:#7F95A8}
+.lines{list-style:none;padding:0;margin:12px 0 0}
+.lines li{padding:10px 0;border-top:1px solid var(--line)}
+.lines li:first-child{border-top:0}
+.lines li > code{display:block;width:fit-content;max-width:100%;overflow-wrap:anywhere;margin-bottom:4px;
+  background:var(--c-soft);border:1px solid var(--c)}
+.lines li span{display:block}
+.note{background:var(--c-soft);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:15px}
+
+/* errors */
+.errs{list-style:none;padding:0;margin:0}
+.errs li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:10px}
+.errs b{display:block}
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>ازاي الفرونت إند بيكلّم الباك إند</h1>
+  <p class="lead">المثال: صفحة تسجيل حساب جديد. الفرونت يبعت البيانات، والباك يحفظها في قاعدة البيانات ويرد.</p>
+  <ul class="legend" aria-label="دليل الألوان">
+    <li class="fe">الفرونت إند</li>
+    <li class="be">الباك إند</li>
+    <li class="db">قاعدة البيانات</li>
+  </ul>
+
+  <figure class="fig">
+    <svg viewBox="0 0 360 660" role="img" aria-label="رسم يوضح الطلب والرد بين المتصفح والسيرفر وقاعدة البيانات">
+      <defs>
+        <marker id="ah1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path class="mk" d="M0,0 L10,5 L0,10 z"/>
+        </marker>
+      </defs>
+
+      <!-- frontend -->
+      <rect class="fe-box" x="10" y="10" width="340" height="124" rx="10"/>
+      <text class="tb c-fe" x="180" y="30" text-anchor="middle" font-size="14">الفرونت إند</text>
+      <text class="tm" x="180" y="45" text-anchor="middle">المتصفح</text>
+
+      <rect class="inner" x="248" y="56" width="92" height="66" rx="8"/>
+      <text class="tb" x="294" y="82" text-anchor="middle">الفورم</text>
+      <text class="tm mono" x="294" y="102" text-anchor="middle">HTML</text>
+
+      <rect class="inner" x="134" y="56" width="92" height="66" rx="8"/>
+      <text class="tb" x="180" y="82" text-anchor="middle">الجافاسكريبت</text>
+      <text class="tm mono" x="180" y="102" text-anchor="middle">fetch</text>
+
+      <rect class="inner" x="20" y="56" width="92" height="66" rx="8"/>
+      <text class="tb" x="66" y="82" text-anchor="middle">عرض النتيجة</text>
+      <text class="tm" x="66" y="102" text-anchor="middle">رسالة أو تحويل</text>
+
+      <line class="arrow" x1="246" y1="89" x2="229" y2="89" marker-end="url(#ah1)"/>
+      <line class="arrow" x1="132" y1="89" x2="115" y2="89" marker-end="url(#ah1)"/>
+
+      <!-- request / response 1 -->
+      <line class="arrow" x1="50" y1="138" x2="50" y2="242" marker-end="url(#ah1)"/>
+      <line class="arrow dash" x1="310" y1="242" x2="310" y2="138" marker-end="url(#ah1)"/>
+      <text class="tb" x="125" y="176" text-anchor="middle">الطلب</text>
+      <text class="tm mono" x="125" y="194" text-anchor="middle">POST + JSON</text>
+      <text class="tm" x="125" y="212" text-anchor="middle">عبر الشبكة</text>
+      <text class="tb" x="235" y="176" text-anchor="middle">الرد</text>
+      <text class="tm mono" x="235" y="194" text-anchor="middle">201 + JSON</text>
+      <text class="tm" x="235" y="212" text-anchor="middle">رجوع للمتصفح</text>
+
+      <!-- backend -->
+      <rect class="be-box" x="10" y="246" width="340" height="206" rx="10"/>
+      <text class="tb c-be" x="180" y="268" text-anchor="middle" font-size="14">الباك إند</text>
+      <text class="tm" x="180" y="283" text-anchor="middle">السيرفر</text>
+
+      <rect class="inner" x="30" y="294" width="300" height="40" rx="8"/>
+      <text class="tb mono" x="180" y="310" text-anchor="middle">Route</text>
+      <text class="tm" x="180" y="326" text-anchor="middle">يستقبل العنوان ويوجّهه</text>
+      <line class="arrow" x1="180" y1="334" x2="180" y2="345" marker-end="url(#ah1)"/>
+
+      <rect class="inner" x="30" y="346" width="300" height="40" rx="8"/>
+      <text class="tb mono" x="180" y="362" text-anchor="middle">Controller</text>
+      <text class="tm" x="180" y="378" text-anchor="middle">يقرأ البيانات القادمة</text>
+      <line class="arrow" x1="180" y1="386" x2="180" y2="397" marker-end="url(#ah1)"/>
+
+      <rect class="inner dash" x="30" y="398" width="300" height="40" rx="8"/>
+      <text class="tb" x="180" y="414" text-anchor="middle">كود المصادقة بتاعك</text>
+      <text class="tm" x="180" y="430" text-anchor="middle">تحقق وتشفير وتوكن</text>
+
+      <!-- request / response 2 -->
+      <line class="arrow" x1="50" y1="456" x2="50" y2="546" marker-end="url(#ah1)"/>
+      <line class="arrow dash" x1="310" y1="546" x2="310" y2="456" marker-end="url(#ah1)"/>
+      <text class="tb" x="125" y="494" text-anchor="middle">حفظ المستخدم</text>
+      <text class="tm mono" x="125" y="512" text-anchor="middle">User.create</text>
+      <text class="tb" x="235" y="494" text-anchor="middle">تأكيد الحفظ</text>
+      <text class="tm mono" x="235" y="512" text-anchor="middle">user id</text>
+
+      <!-- db -->
+      <rect class="db-box" x="10" y="550" width="340" height="100" rx="10"/>
+      <text class="tb c-db" x="180" y="572" text-anchor="middle" font-size="14">قاعدة البيانات</text>
+      <rect class="inner" x="40" y="582" width="280" height="56" rx="6"/>
+      <line x1="40" y1="610" x2="320" y2="610" stroke="var(--line)" stroke-width="1.2"/>
+      <text class="tm mono tb" x="87" y="600" text-anchor="middle">name</text>
+      <text class="tm mono tb" x="180" y="600" text-anchor="middle">email</text>
+      <text class="tm mono tb" x="273" y="600" text-anchor="middle">password</text>
+      <text class="mono" font-size="10.5" x="87" y="628" text-anchor="middle">Ali</text>
+      <text class="mono" font-size="10.5" x="180" y="628" text-anchor="middle">ali@mail.com</text>
+      <text class="mono" font-size="10.5" x="273" y="628" text-anchor="middle">$2b$10Xk</text>
+    </svg>
+    <figcaption>الخط المتصل هو الطلب، والخط المتقطع هو الرد. الصندوق المتقطع في الباك هو كود المصادقة اللي انت عارفه.</figcaption>
+  </figure>
+</header>
+
+<section>
+  <h2>الربط كله: أربع حاجات لازم تتطابق</h2>
+  <p>الفرونت والباك برنامجين منفصلين. بيتكلموا بس عن طريق طلب HTTP وردّ JSON. لو الأربع حاجات دي متطابقة في الطرفين، الربط يشتغل.</p>
+
+  <div class="match">
+    <h3>العنوان (URL)</h3>
+    <div class="row fe"><span class="who">الفرونت</span><span class="val">fetch(`${API}/api/auth/register`)</span></div>
+    <div class="row be"><span class="who">الباك</span><span class="val">app.use("/api/auth", routes)<br>router.post("/register", register)</span></div>
+    <p class="muted" style="margin:8px 0 0">البريفكس <code>/api/auth</code> + المسار <code>/register</code> = نفس العنوان اللي في الفرونت.</p>
+  </div>
+
+  <div class="match">
+    <h3>نوع الطلب (Method)</h3>
+    <div class="row fe"><span class="who">الفرونت</span><span class="val">method: "POST"</span></div>
+    <div class="row be"><span class="who">الباك</span><span class="val">router.post(...)</span></div>
+  </div>
+
+  <div class="match">
+    <h3>أسماء الحقول في JSON</h3>
+    <div class="row fe"><span class="who">الفرونت</span><span class="val">{ name, email, password }</span></div>
+    <div class="row be"><span class="who">الباك</span><span class="val">const { name, email, password } = req.body</span></div>
+  </div>
+
+  <div class="match">
+    <h3>شكل الرد</h3>
+    <div class="row be"><span class="who">الباك</span><span class="val">res.status(201).json({ token })</span></div>
+    <div class="row fe"><span class="who">الفرونت</span><span class="val">const result = await res.json()<br>result.token</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>الداتا بتتحول إزاي في الطريق</h2>
+  <p>نفس المعلومة بتغيّر شكلها أربع مرات من الـinput لحد الـDB.</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 360 236" role="img" aria-label="رسم توضيحي: كل حقل في الفورم بيتحول لمفتاح في كائن جافاسكريبت">
+      <defs>
+        <marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path class="mk" d="M0,0 L10,5 L0,10 z"/>
+        </marker>
+      </defs>
+
+      <!-- form sketch -->
+      <rect class="fe-box" x="198" y="8" width="152" height="220" rx="14"/>
+      <text class="tb c-fe" x="274" y="30" text-anchor="middle" font-size="13">صفحة التسجيل</text>
+
+      <text class="tm mono" x="208" y="51">id="name"</text>
+      <rect class="inner" x="208" y="56" width="132" height="28" rx="6"/>
+      <text class="mono" font-size="11" x="274" y="74" text-anchor="middle">Ali</text>
+
+      <text class="tm mono" x="208" y="99">id="email"</text>
+      <rect class="inner" x="208" y="104" width="132" height="28" rx="6"/>
+      <text class="mono" font-size="11" x="274" y="122" text-anchor="middle">ali@mail.com</text>
+
+      <text class="tm mono" x="208" y="147">id="password"</text>
+      <rect class="inner" x="208" y="152" width="132" height="28" rx="6"/>
+      <text class="mono" font-size="11" x="274" y="170" text-anchor="middle">••••••</text>
+
+      <rect class="btn" x="208" y="192" width="132" height="26" rx="6"/>
+      <text class="btnt" x="274" y="209" text-anchor="middle">تسجيل</text>
+
+      <!-- arrows -->
+      <line class="arrow" x1="205" y1="70" x2="182" y2="70" marker-end="url(#ah2)"/>
+      <line class="arrow" x1="205" y1="118" x2="182" y2="118" marker-end="url(#ah2)"/>
+      <line class="arrow" x1="205" y1="166" x2="182" y2="166" marker-end="url(#ah2)"/>
+
+      <!-- js object -->
+      <rect class="codebox" x="10" y="8" width="170" height="220" rx="10"/>
+      <text class="codem" x="95" y="28" text-anchor="middle">الكائن اللي بنبنيه</text>
+      <text class="codet" x="20" y="52">{</text>
+      <text class="codet" x="20" y="74">  name: "Ali",</text>
+      <text class="codet" x="20" y="122">  email: "ali@mail.com",</text>
+      <text class="codet" x="20" y="170">  password: "••••••"</text>
+      <text class="codet" x="20" y="212">}</text>
+    </svg>
+    <figcaption>كل input بيتحول لمفتاح. المفتاح ده هو اللي الباك هيقراه من <code>req.body</code>.</figcaption>
+  </figure>
+
+  <div class="chain">
+    <div class="node fe"><b>في الفورم</b><span class="val">نصوص مكتوبة: Ali / ali@mail.com / 123456</span></div>
+    <div class="hop">↓ <code>.value</code> يقرأ كل حقل</div>
+    <div class="node fe"><b>في الجافاسكريبت: كائن</b><span class="val">{ name: "Ali", email: "ali@mail.com", password: "123456" }</span></div>
+    <div class="hop">↓ <code>JSON.stringify(data)</code> يحوّله لنص</div>
+    <div class="node fe"><b>على الشبكة: نص JSON</b><span class="val">'{"name":"Ali","email":"ali@mail.com","password":"123456"}'</span></div>
+    <div class="hop">↓ <code>express.json()</code> يرجّعه كائن</div>
+    <div class="node be"><b>في الباك: req.body</b><span class="val">{ name: "Ali", email: "ali@mail.com", password: "123456" }</span></div>
+    <div class="hop">↓ كود المصادقة يشفّر الباسورد ثم <code>User.create()</code></div>
+    <div class="node db"><b>في قاعدة البيانات: سجل جديد</b><span class="val">{ _id: "…", name: "Ali", email: "ali@mail.com", password: "$2b$10Xk…" }</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>رحلة الطلب من أولها لآخرها</h2>
+  <figure class="fig">
+    <svg viewBox="0 0 360 568" role="img" aria-label="مخطط تسلسلي بين الفرونت والباك وقاعدة البيانات">
+      <defs>
+        <marker id="ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path class="mk" d="M0,0 L10,5 L0,10 z"/>
+        </marker>
+      </defs>
+
+      <!-- lanes -->
+      <rect class="db-box" x="10" y="8" width="100" height="34" rx="8"/>
+      <text class="tb c-db" x="60" y="29" text-anchor="middle">قاعدة البيانات</text>
+      <rect class="be-box" x="130" y="8" width="100" height="34" rx="8"/>
+      <text class="tb c-be" x="180" y="29" text-anchor="middle">الباك إند</text>
+      <rect class="fe-box" x="250" y="8" width="100" height="34" rx="8"/>
+      <text class="tb c-fe" x="300" y="29" text-anchor="middle">الفرونت إند</text>
+      <line class="life" x1="60" y1="42" x2="60" y2="560"/>
+      <line class="life" x1="180" y1="42" x2="180" y2="560"/>
+      <line class="life" x1="300" y1="42" x2="300" y2="560"/>
+
+      <!-- 1 -->
+      <circle class="num" cx="18" cy="76" r="10"/><text class="numt" x="18" y="80" text-anchor="middle">1</text>
+      <rect class="fe-box" x="196" y="58" width="148" height="36" rx="8"/>
+      <text x="270" y="73" text-anchor="middle">المستخدم يملأ الفورم</text>
+      <text x="270" y="88" text-anchor="middle">ويضغط تسجيل</text>
+
+      <!-- 2 -->
+      <circle class="num" cx="18" cy="156" r="10"/><text class="numt" x="18" y="160" text-anchor="middle">2</text>
+      <text class="tb mono" x="240" y="129" text-anchor="middle">fetch</text>
+      <text class="tm mono" x="240" y="144" text-anchor="middle">POST + JSON</text>
+      <line class="arrow" x1="296" y1="156" x2="184" y2="156" marker-end="url(#ah3)"/>
+
+      <!-- 3 -->
+      <circle class="num" cx="18" cy="204" r="10"/><text class="numt" x="18" y="208" text-anchor="middle">3</text>
+      <rect class="be-box" x="112" y="186" width="136" height="36" rx="8"/>
+      <text class="mono" font-size="10.5" x="180" y="201" text-anchor="middle">Route + Controller</text>
+      <text x="180" y="215" text-anchor="middle">قراءة البيانات</text>
+
+      <!-- 4 -->
+      <circle class="num" cx="18" cy="262" r="10"/><text class="numt" x="18" y="266" text-anchor="middle">4</text>
+      <rect class="inner dash" x="112" y="244" width="136" height="36" rx="8"/>
+      <text x="180" y="259" text-anchor="middle">كود المصادقة بتاعك</text>
+      <text class="tm" x="180" y="273" text-anchor="middle">تحقق وتشفير</text>
+
+      <!-- 5 -->
+      <circle class="num" cx="18" cy="346" r="10"/><text class="numt" x="18" y="350" text-anchor="middle">5</text>
+      <text class="tb mono" x="120" y="319" text-anchor="middle">User.create</text>
+      <text class="tm mono" x="120" y="334" text-anchor="middle">INSERT</text>
+      <line class="arrow" x1="176" y1="346" x2="64" y2="346" marker-end="url(#ah3)"/>
+
+      <!-- 6 -->
+      <circle class="num" cx="18" cy="406" r="10"/><text class="numt" x="18" y="410" text-anchor="middle">6</text>
+      <text class="tb" x="120" y="379" text-anchor="middle">تم الحفظ</text>
+      <text class="tm mono" x="120" y="394" text-anchor="middle">user id</text>
+      <line class="arrow dash" x1="64" y1="406" x2="176" y2="406" marker-end="url(#ah3)"/>
+
+      <!-- 7 -->
+      <circle class="num" cx="18" cy="466" r="10"/><text class="numt" x="18" y="470" text-anchor="middle">7</text>
+      <text class="tb" x="240" y="439" text-anchor="middle">الرد</text>
+      <text class="tm mono" x="240" y="454" text-anchor="middle">JSON + token</text>
+      <line class="arrow dash" x1="184" y1="466" x2="296" y2="466" marker-end="url(#ah3)"/>
+
+      <!-- 8 -->
+      <circle class="num" cx="18" cy="520" r="10"/><text class="numt" x="18" y="524" text-anchor="middle">8</text>
+      <rect class="fe-box" x="196" y="500" width="148" height="40" rx="8"/>
+      <text x="270" y="516" text-anchor="middle">يحفظ التوكن</text>
+      <text x="270" y="531" text-anchor="middle">ويحوّل للداشبورد</text>
+    </svg>
+    <figcaption>الرحلة بتبدأ وتنتهي في المتصفح. الباك في النص، والـDB آخر محطة.</figcaption>
+  </figure>
+
+  <ol class="seq fe">
+    <li>المستخدم يكتب بياناته ويضغط زرار التسجيل.</li>
+    <li>الجافاسكريبت يجمع القيم ويبعتها بـ <code>fetch</code> كطلب POST.</li>
+    <li>السيرفر يوجّه الطلب للـRoute، والـController يقرأ <code>req.body</code>.</li>
+    <li>كود المصادقة بتاعك يتحقق ويشفّر الباسورد.</li>
+    <li>الباك يدخل المستخدم في الـDB بـ <code>User.create</code>.</li>
+    <li>الـDB تأكد الحفظ وترجع الـid.</li>
+    <li>الباك يرد بـ JSON فيه التوكن، أو رسالة خطأ.</li>
+    <li>الفرونت يقرأ الرد، يحفظ التوكن ويحوّل المستخدم.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>الكود خطوة خطوة</h2>
+  <p>كل خطوة تحت فيها الكود، وبعده شرح كل سطر مهم بيعمل إيه. اللون بيقولك الكود ده في أنهي طرف.</p>
+
+  <!-- step 1 -->
+  <div class="step fe">
+    <h3>الخطوة 1: الفورم في الصفحة</h3>
+    <div class="tab">register.html</div>
+<pre><code>&lt;form id="registerForm"&gt;
+  &lt;input id="name" type="text" placeholder="Name" required&gt;
+  &lt;input id="email" type="email" placeholder="Email" required&gt;
+  &lt;input id="password" type="password" placeholder="Password" required&gt;
+  &lt;button type="submit"&gt;Register&lt;/button&gt;
+  &lt;p id="msg"&gt;&lt;/p&gt;
+&lt;/form&gt;
+
+&lt;script src="register.js"&gt;&lt;/script&gt;</code></pre>
+    <ul class="lines">
+      <li><code>&lt;form id="registerForm"&gt;</code><span>الفورم لازم له <code>id</code> عشان الجافاسكريبت يمسكه.</span></li>
+      <li><code>&lt;input id="email" ...&gt;</code><span>كل حقل له <code>id</code>. من خلاله الجافاسكريبت هيقرأ القيمة. <code>required</code> يمنع الإرسال لو الحقل فاضي.</span></li>
+      <li><code>&lt;button type="submit"&gt;</code><span>لما يتضغط، الفورم بيعمل حدث اسمه <code>submit</code>. ده اللي هنمسكه في الخطوة الجاية.</span></li>
+      <li><code>&lt;p id="msg"&gt;</code><span>مكان فاضي هنكتب فيه رسالة الخطأ لو حصلت.</span></li>
+      <li><code>&lt;script src="register.js"&gt;</code><span>يحمّل ملف الجافاسكريبت. لازم يكون بعد الفورم عشان العناصر تبقى موجودة.</span></li>
+    </ul>
+  </div>
+
+  <!-- step 2 -->
+  <div class="step fe">
+    <h3>الخطوة 2: نمسك الفورم ونجمع الداتا</h3>
+    <div class="tab">register.js</div>
+<pre><code>const API = <span class="s">"http://localhost:5000"</span>;
+const form = document.getElementById(<span class="s">"registerForm"</span>);
+const msg = document.getElementById(<span class="s">"msg"</span>);
+
+form.addEventListener(<span class="s">"submit"</span>, async (e) =&gt; {
+  e.preventDefault();
+
+  const data = {
+    name: document.getElementById(<span class="s">"name"</span>).value,
+    email: document.getElementById(<span class="s">"email"</span>).value,
+    password: document.getElementById(<span class="s">"password"</span>).value,
+  };</code></pre>
+    <ul class="lines">
+      <li><code>const API = "http://localhost:5000"</code><span>عنوان السيرفر في مكان واحد. لما ترفع الموقع هتغيّره هنا بس.</span></li>
+      <li><code>getElementById("registerForm")</code><span>يجيب الفورم من الصفحة ويحطه في متغير.</span></li>
+      <li><code>addEventListener("submit", async (e) =&gt; {</code><span>يقول: لما المستخدم يعمل submit شغّل الدالة دي. كلمة <code>async</code> عشان نقدر نستخدم <code>await</code> جواها.</span></li>
+      <li><code>e.preventDefault()</code><span>يمنع المتصفح من سلوكه الافتراضي: يعمل refresh للصفحة ويضيّع الداتا. من غيره مفيش طلب هيوصل.</span></li>
+      <li><code>const data = { name: ..., email: ..., password: ... }</code><span>بنقرأ <code>.value</code> من كل حقل ونجمعهم في كائن. أسماء المفاتيح هي اللي الباك هيقراها، فلازم تتطابق.</span></li>
+    </ul>
+  </div>
+
+  <!-- step 3 -->
+  <div class="step fe">
+    <h3>الخطوة 3: نبعت الداتا للباك بـ fetch</h3>
+    <div class="tab">register.js (كمّل)</div>
+<pre><code>  try {
+    const res = await fetch(`${API}/api/auth/register`, {
+      method: <span class="s">"POST"</span>,
+      headers: { <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span> },
+      body: JSON.stringify(data),
+    });</code></pre>
+    <ul class="lines">
+      <li><code>try {</code><span>نحط الطلب جوا <code>try</code> عشان لو السيرفر واقف نمسك الخطأ في <code>catch</code>.</span></li>
+      <li><code>fetch(url, options)</code><span>الأمر اللي بيبعت الطلب فعلاً. الأول العنوان، وبعده إعدادات الطلب.</span></li>
+      <li><code>method: "POST"</code><span>POST معناها: بنبعت بيانات جديدة. لازم تطابق <code>router.post</code> في الباك.</span></li>
+      <li><code>"Content-Type": "application/json"</code><span>يعرّف الباك إن الجسم JSON، فيعرف يقرأه.</span></li>
+      <li><code>body: JSON.stringify(data)</code><span>الشبكة بتنقل نصوص مش كائنات. فبنحوّل الكائن لنص JSON.</span></li>
+      <li><code>await</code><span>يوقف الدالة لحد ما الرد يرجع من السيرفر، وبعدين يكمّل.</span></li>
+    </ul>
+  </div>
+
+  <!-- step 4 -->
+  <div class="step fe">
+    <h3>الخطوة 4: نقرأ الرد ونتصرف</h3>
+    <div class="tab">register.js (كمّل)</div>
+<pre><code>    const result = await res.json();
+
+    if (!res.ok) {
+      msg.textContent = result.message;
+      return;
+    }
+
+    localStorage.setItem(<span class="s">"token"</span>, result.token);
+    window.location.href = <span class="s">"/dashboard.html"</span>;
+  } catch (err) {
+    msg.textContent = <span class="s">"Server is not reachable"</span>;
+  }
+});</code></pre>
+    <ul class="lines">
+      <li><code>await res.json()</code><span>يقرأ جسم الرد ويحوّله لكائن جافاسكريبت.</span></li>
+      <li><code>if (!res.ok)</code><span><code>res.ok</code> بتبقى true لو الحالة بين 200 و299. لو الباك رد 400 (إيميل مكرر مثلاً)، <code>fetch</code> مش بيرمي خطأ. لازم نفحص بنفسنا.</span></li>
+      <li><code>msg.textContent = result.message</code><span>نعرض رسالة الباك للمستخدم، و<code>return</code> يوقف باقي الدالة.</span></li>
+      <li><code>localStorage.setItem("token", ...)</code><span>نحفظ التوكن في المتصفح. هنحتاجه في أي طلب لصفحة محمية. (في مشاريع كبيرة بيُستخدم cookie من نوع httpOnly لأنه أأمن.)</span></li>
+      <li><code>window.location.href = ...</code><span>ينقل المستخدم لصفحة تانية بعد النجاح.</span></li>
+      <li><code>catch (err)</code><span>بيشتغل لو الطلب نفسه فشل: السيرفر واقف أو البورت غلط.</span></li>
+    </ul>
+  </div>
+
+  <!-- step 5 -->
+  <div class="step be">
+    <h3>الخطوة 5: السيرفر نفسه</h3>
+    <div class="tab">server.js</div>
+<pre><code>const express = require(<span class="s">"express"</span>);
+const cors = require(<span class="s">"cors"</span>);
+const mongoose = require(<span class="s">"mongoose"</span>);
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.use(<span class="s">"/api/auth"</span>, require(<span class="s">"./routes/auth"</span>));
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() =&gt; app.listen(5000));</code></pre>
+    <ul class="lines">
+      <li><code>app.use(cors())</code><span>الفرونت (مثلاً على بورت 5173) والباك (على 5000) أصلين مختلفين. المتصفح يحجب الرد إلا لو الباك سمح. من غيره بتشوف خطأ CORS.</span></li>
+      <li><code>app.use(express.json())</code><span>ميدل وير بيقرأ جسم الطلب JSON ويحطه في <code>req.body</code>. من غيره <code>req.body</code> بيبقى <code>undefined</code>.</span></li>
+      <li><code>app.use("/api/auth", require("./routes/auth"))</code><span>أي طلب عنوانه يبدأ بـ <code>/api/auth</code> يروح لملف الـroutes.</span></li>
+      <li><code>mongoose.connect(...)</code><span>يفتح الاتصال بقاعدة البيانات.</span></li>
+      <li><code>.then(() =&gt; app.listen(5000))</code><span>بعد ما الاتصال ينجح، السيرفر يبدأ يستقبل طلبات على بورت 5000.</span></li>
+    </ul>
+  </div>
+
+  <!-- step 6 -->
+  <div class="step be">
+    <h3>الخطوة 6: الـRoute هو نقطة اللقاء</h3>
+    <div class="tab">routes/auth.js</div>
+<pre><code>const router = require(<span class="s">"express"</span>).Router();
+const { register, login } =
+  require(<span class="s">"../controllers/authController"</span>);
+
+router.post(<span class="s">"/register"</span>, register);
+router.post(<span class="s">"/login"</span>, login);
+
+module.exports = router;</code></pre>
+    <ul class="lines">
+      <li><code>router.post("/register", register)</code><span>يقول: لو جه طلب POST على <code>/register</code>، شغّل الدالة <code>register</code>. مع البريفكس من <code>server.js</code> يبقى العنوان الكامل <code>/api/auth/register</code>. ده نفس اللي كتبته في <code>fetch</code>.</span></li>
+      <li><code>module.exports = router</code><span>نصدّر الـrouter عشان <code>server.js</code> يستخدمه.</span></li>
+    </ul>
+  </div>
+
+  <!-- step 7 -->
+  <div class="step be">
+    <h3>الخطوة 7: الـController يستقبل ويرد</h3>
+    <div class="tab">controllers/authController.js</div>
+<pre><code>const User = require(<span class="s">"../models/User"</span>);
+
+exports.register = async (req, res) =&gt; {
+  const { name, email, password } = req.body;
+
+  <span class="c">// your auth code: validate, check duplicate,</span>
+  <span class="c">// hash password -&gt; hashedPassword</span>
+
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+  });
+
+  <span class="c">// your auth code: create the token -&gt; token</span>
+
+  res.status(201).json({ message: <span class="s">"Registered"</span>, token });
+};</code></pre>
+    <ul class="lines">
+      <li><code>const { name, email, password } = req.body</code><span><code>req.body</code> هو الكائن اللي بعته الفرونت. السطر ده بيطلّع 3 قيم منه بنفس أسماء المفاتيح.</span></li>
+      <li><code>// your auth code</code><span>ده الجزء اللي انت عارفه وسيبناه: التحقق والتشفير وإنشاء التوكن. المهم تعرف هو بيدّي إيه: <code>hashedPassword</code> و<code>token</code>.</span></li>
+      <li><code>await User.create({ ... })</code><span>ده السطر اللي بيدخل الداتا في قاعدة البيانات. هنشرحه في الخطوة الجاية.</span></li>
+      <li><code>res.status(201).json({ ... })</code><span>يرد على الفرونت. 201 = اتعمل بنجاح. الكائن ده هو اللي الفرونت هيقراه بـ <code>res.json()</code>. يعني <code>token</code> هنا = <code>result.token</code> هناك.</span></li>
+    </ul>
+    <div class="note"><b>للأخطاء:</b> ارجع <code>res.status(400).json({ message: "Email already used" })</code>. الفرونت هيلاقي <code>res.ok</code> بـ false ويعرض <code>result.message</code>.</div>
+  </div>
+
+  <!-- step 8 -->
+  <div class="step db">
+    <h3>الخطوة 8: الموديل ودخول الداتا للـDB</h3>
+    <div class="tab">models/User.js</div>
+<pre><code>const mongoose = require(<span class="s">"mongoose"</span>);
+
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, unique: true },
+  password: String,
+});
+
+module.exports = mongoose.model(<span class="s">"User"</span>, userSchema);</code></pre>
+    <ul class="lines">
+      <li><code>new mongoose.Schema({ ... })</code><span>يوصف شكل السجل: إيه الحقول ونوع كل واحد.</span></li>
+      <li><code>unique: true</code><span>قاعدة البيانات نفسها ترفض إيميل مكرر.</span></li>
+      <li><code>mongoose.model("User", userSchema)</code><span>يصنع الكلاس <code>User</code> اللي استخدمناه. بيتخزن في collection اسمها <code>users</code>.</span></li>
+      <li><code>User.create({ ... })</code><span>يتحول لأمر <code>insertOne</code> على الـDB، وبيضيف السجل الجديد ويرجّع السجل ومعاه <code>_id</code>.</span></li>
+    </ul>
+    <div class="note">لو بتستخدم SQL (MySQL أو Postgres)، الفكرة نفسها والأمر هو: <code>INSERT INTO users (name, email, password) VALUES (?, ?, ?)</code>. بتبعت القيم الثلاث اللي طلعت من <code>req.body</code>.</div>
+  </div>
+</section>
+
+<section>
+  <h2>تسجيل الدخول: نفس الفكرة بتغييرين</h2>
+  <p>صفحة الـlogin بنفس الخطوات. اللي بيتغير العنوان والبيانات المبعوتة، وبعدها التوكن بيسافر مع كل طلب لصفحة محمية.</p>
+
+  <div class="step fe">
+    <h3>الفرونت: طلب الدخول</h3>
+    <div class="tab">login.js</div>
+<pre><code>const res = await fetch(`${API}/api/auth/login`, {
+  method: <span class="s">"POST"</span>,
+  headers: { <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span> },
+  body: JSON.stringify({ email, password }),
+});</code></pre>
+    <ul class="lines">
+      <li><code>/api/auth/login</code><span>عنوان تاني، يطابق <code>router.post("/login", login)</code>.</span></li>
+      <li><code>{ email, password }</code><span>بس حقلين. مفيش <code>name</code>. والباقي زي التسجيل: نقرأ الرد، نحفظ التوكن، ونحوّل.</span></li>
+    </ul>
+  </div>
+
+  <div class="step fe">
+    <h3>بعد الدخول: طلب لصفحة محمية</h3>
+    <div class="tab">profile.js</div>
+<pre><code>const token = localStorage.getItem(<span class="s">"token"</span>);
+
+const res = await fetch(`${API}/api/profile`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+const profile = await res.json();</code></pre>
+    <ul class="lines">
+      <li><code>localStorage.getItem("token")</code><span>نجيب التوكن اللي حفظناه وقت الدخول.</span></li>
+      <li><code>Authorization: `Bearer ${token}`</code><span>نبعت التوكن في الهيدر. الميدل وير بتاعك في الباك يقرأ الهيدر ده ويتحقق منه، وبعدين يسمح للطلب يكمّل.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>لما الربط ما يشتغلش</h2>
+  <p>افتح أدوات المطوّر في المتصفح (F12)، وروح تبويب <b>Network</b>، وبعدين اضغط زرار التسجيل. اضغط على الطلب هتلاقي <b>Payload</b> (اللي الفرونت بعته) و<b>Response</b> (اللي الباك رد بيه). كده تعرف المشكلة في أنهي طرف.</p>
+
+  <ul class="errs">
+    <li><b>الصفحة بتعمل refresh ومفيش طلب</b>نسيت <code>e.preventDefault()</code>.</li>
+    <li><b>خطأ CORS في الـConsole</b>الباك محتاج <code>app.use(cors())</code>، أو العنوان بتاع الباك غلط.</li>
+    <li><b><code>req.body</code> فاضي أو undefined</b>نسيت <code>app.use(express.json())</code>، أو الفرونت ما بعتش <code>Content-Type: application/json</code>.</li>
+    <li><b>404 Not Found</b>المسار أو الـmethod غلط. راجع البريفكس <code>/api/auth</code> و<code>router.post</code>.</li>
+    <li><b>الطلب نجح بس الاسم اتحفظ فاضي</b>اسم المفتاح مختلف. الفرونت بعت <code>username</code> والباك بيقرأ <code>name</code>.</li>
+    <li><b><code>Failed to fetch</code></b>السيرفر مش شغال، أو البورت مختلف عن اللي في <code>API</code>.</li>
+  </ul>
+</section>
+
+</main>
+</body>
+</html>
